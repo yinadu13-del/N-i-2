@@ -19,19 +19,29 @@
         }
         .perspective-1000 {
             perspective: 1000px;
+            -webkit-perspective: 1000px;
         }
         .transform-style-3d {
             transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
         }
         .backface-hidden {
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
         }
         .rotate-y-180 {
-            transform: rotateY(180deg);
+            transform: rotateY(180deg) !important;
+            -webkit-transform: rotateY(180deg) !important;
         }
         .flipped {
-            transform: rotateY(180deg);
+            transform: rotateY(180deg) !important;
+            -webkit-transform: rotateY(180deg) !important;
+        }
+        
+        /* Smooth Explicit 3D Transitions */
+        #flashcard-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-transition: -webkit-transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         /* Premium custom scrollbar */
@@ -165,7 +175,7 @@
                 <div class="flex-1 flex flex-col items-center justify-center py-6">
                     <div class="perspective-1000 w-full max-w-md h-80 cursor-pointer" onclick="flipCard()">
                         <!-- Card Inner -->
-                        <div id="flashcard-inner" class="transform-style-3d relative w-full h-full duration-500 transform transition-transform shadow-xl rounded-3xl border border-slate-200 bg-white">
+                        <div id="flashcard-inner" class="transform-style-3d relative w-full h-full shadow-xl rounded-3xl border border-slate-200 bg-white">
                             
                             <!-- Front Side (Hanzi) -->
                             <div class="backface-hidden absolute inset-0 flex flex-col justify-between p-8 bg-white rounded-3xl">
@@ -334,7 +344,7 @@
                         <!-- User Answer Input -->
                         <div class="space-y-2">
                             <label class="block text-xs font-bold text-slate-600">Lời dịch tiếng Trung của bạn:</label>
-                            <textarea id="translation-user-input" rows="3" placeholder="Ví dụ: 我想 point 一碗米饭和一瓶啤酒..." class="w-full border-2 border-slate-200 focus:border-emerald-500 rounded-2xl p-4 text-base font-semibold focus:outline-none focus:ring-0 transition-colors"></textarea>
+                            <textarea id="translation-user-input" rows="3" placeholder="Ví dụ: 我想 point 一碗米饭 và một chai bia..." class="w-full border-2 border-slate-200 focus:border-emerald-500 rounded-2xl p-4 text-base font-semibold focus:outline-none focus:ring-0 transition-colors"></textarea>
                         </div>
 
                         <!-- Action Submit -->
@@ -511,7 +521,7 @@
         // Sample translations (used if no API response is generated or offline)
         const sampleTranslations = [
             { vietnamese: "Nhà hàng này vừa ngon vừa rẻ.", suggested_chinese: "这家饭馆又好吃又便宜。" },
-            { vietnamese: "Tôi muốn gọi một bát cơm trắng và một chai bia.", suggested_chinese: "我想点 một 碗米饭和一瓶啤酒。" },
+            { vietnamese: "Tôi muốn gọi một bát cơm trắng và một chai bia.", suggested_chinese: "我想点 một 碗米饭 và một 瓶啤酒。" },
             { vietnamese: "Món cá sốt chua ngọt này hương vị rất thơm ngon.", suggested_chinese: "这道糖醋鱼味道很香。" },
             { vietnamese: "Tôi no rồi, cho tôi gói mang về.", suggested_chinese: "我饱了，给我打包。" },
             { vietnamese: "Phục vụ ơi, cho chúng tôi tính tiền nhé.", suggested_chinese: "服务员，我们要结账。" }
@@ -735,7 +745,12 @@
         function loadFlashcard(index) {
             const word = vocabData[index];
             appState.flashcardFlipped = false;
-            document.getElementById("flashcard-inner").classList.remove("flipped");
+            
+            // Explicitly reset rotation transforms on load
+            const cardInner = document.getElementById("flashcard-inner");
+            cardInner.classList.remove("flipped");
+            cardInner.style.transform = "rotateY(0deg)";
+            cardInner.style.webkitTransform = "rotateY(0deg)";
 
             document.getElementById("card-hanzi").innerText = word.hanzi;
             document.getElementById("card-pinyin").innerText = word.pinyin;
@@ -759,8 +774,12 @@
             const cardInner = document.getElementById("flashcard-inner");
             if (appState.flashcardFlipped) {
                 cardInner.classList.add("flipped");
+                cardInner.style.transform = "rotateY(180deg)";
+                cardInner.style.webkitTransform = "rotateY(180deg)";
             } else {
                 cardInner.classList.remove("flipped");
+                cardInner.style.transform = "rotateY(0deg)";
+                cardInner.style.webkitTransform = "rotateY(0deg)";
             }
         }
 
@@ -776,6 +795,7 @@
             loadFlashcard(appState.flashcardIndex);
         }
 
+        // Prev Card triggers safely
         function prevCard() {
             appState.flashcardIndex = (appState.flashcardIndex - 1 + vocabData.length) % vocabData.length;
             loadFlashcard(appState.flashcardIndex);
@@ -920,6 +940,7 @@
             loadDictationWord(autoplay);
         }
 
+        // Dictation loading
         function loadDictationWord(autoplay = true) {
             if (appState.dictationIndex >= appState.dictationWords.length) {
                 showDictationResult();
